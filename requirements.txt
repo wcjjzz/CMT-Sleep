@@ -1,0 +1,9 @@
+# external requirements
+numpy
+matplotlib
+h5py 
+neptune-client
+scikit-image
+sklearn
+einops
+mne
