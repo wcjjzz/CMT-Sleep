@@ -7,7 +7,10 @@ from mne.datasets.sleep_physionet.age import fetch_data
 # from mne.time_frequency import tfr_morlet, psd_multitaper, psd_welch
 import h5py
 
-
+'''
+目前来看好像没有什么用处，两个函数分别muti_epoch和single_epoch中被复制了
+原版中此文件被用于画图的interpret_script_main.ipynb引用
+'''
 def signal_extract_sequential(subjects, days, channel = 'eeg1', filter = True, freq = [0.2,40], stride = 3):
 
   ignore_data = [[13,2],[36,1],[39,1],[39,2],[52,1],[68,1],[68,2], [69,1],[69,2],[78,1],[78,2],[79,1],[79,2]]

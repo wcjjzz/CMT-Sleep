@@ -1,4 +1,5 @@
 '''
+此文件完全代替了single_epoch
 除了原有的预处理signal_extract外
 还加入了针对目前遇到的数据集的不同预处理接口
 Sleep-EDF, DREAMS, Figshare
@@ -300,10 +301,20 @@ def light_off_time(sub, day, edf_file_path):
     return time_difference.total_seconds()
 
 
-
-# 针对Dreams数据集，需要输入<PSG信号地址psg_path>和<注释文件地址hypnogram_path>
-# 返回psg信号，标签数组，psg信号长度，均值，标准差
-# 需要注意原本的注释文件数字对应的睡眠阶段和Sleep-edf是不一样的，但是我们事先做了注释转换，所以此处代码的对应关系不需要改变
+'''
+ 针对Dreams数据集，需要输入<PSG信号地址psg_path>和<注释文件地址hypnogram_path>
+ 返回psg信号，标签数组，psg信号长度，均值，标准差
+ 注意:
+ 注释文件应该符合anno库的格式，就像：
+ # MNE-Annotations
+ # onset, duration, description
+ 0.0,30630.0,Sleep stage W
+ 30630.0,120.0,Sleep stage 1
+ 30750.0,390.0,Sleep stage 2
+ ...
+ 睡眠阶段命名采用R&K标准
+ 原数据集的注释文件数字对应的睡眠阶段和Sleep-edf是不一样的，我们使用了额外的文件进行转换
+'''
 def DREAMS_signal_extract(psg_path, hypnogram_path, channel='FP1-A2', filter=True, freq=[0.2, 40]):
     id_idx1 = psg_path.find("subject")
     id_idx2 = psg_path.find(".edf")
@@ -413,9 +424,10 @@ def DREAMS_signal_extract(psg_path, hypnogram_path, channel='FP1-A2', filter=Tru
     return main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std
 
 
-
+'''
 # 针对figshare数据集，需要输入<PSG信号文件地址subjects>
 # 返回PSG信号，长度，均值，标准差
+'''
 def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40]):
     all_channels = (
         'EEG Fp1-LE', 'EEG F3-LE', 'EEG C3-LE', 'EEG P3-LE', 'EEG O1-LE', 'EEG F7-LE', 'EEG T3-LE',
@@ -460,7 +472,7 @@ def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40
 def main():
     args = parse_option()
 
-    # Separate Subjects into 5 groups
+    # 将测试数据分成5个组
     from sklearn.model_selection import KFold
     days = np.arange(1, 3)
     subjects = np.arange(0, 83)
