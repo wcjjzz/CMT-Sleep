@@ -1,8 +1,7 @@
 '''
-此文件完全代替了single_epoch
 除了原有的预处理signal_extract外
 还加入了针对目前遇到的数据集的不同预处理接口
-Sleep-EDF, DREAMS, Figshare
+Sleep-EDF, DREAMS, Figshare, hospital
 '''
 
 
@@ -301,20 +300,10 @@ def light_off_time(sub, day, edf_file_path):
     return time_difference.total_seconds()
 
 
-'''
- 针对Dreams数据集，需要输入<PSG信号地址psg_path>和<注释文件地址hypnogram_path>
- 返回psg信号，标签数组，psg信号长度，均值，标准差
- 注意:
- 注释文件应该符合anno库的格式，就像：
- # MNE-Annotations
- # onset, duration, description
- 0.0,30630.0,Sleep stage W
- 30630.0,120.0,Sleep stage 1
- 30750.0,390.0,Sleep stage 2
- ...
- 睡眠阶段命名采用R&K标准
- 原数据集的注释文件数字对应的睡眠阶段和Sleep-edf是不一样的，我们使用了额外的文件进行转换
-'''
+
+# 针对Dreams数据集，需要输入<PSG信号地址psg_path>和<注释文件地址hypnogram_path>
+# 返回psg信号，标签数组，psg信号长度，均值，标准差
+# 需要注意原本的注释文件数字对应的睡眠阶段和Sleep-edf是不一样的，但是我们事先做了注释转换，所以此处代码的对应关系不需要改变
 def DREAMS_signal_extract(psg_path, hypnogram_path, channel='FP1-A2', filter=True, freq=[0.2, 40]):
     id_idx1 = psg_path.find("subject")
     id_idx2 = psg_path.find(".edf")
@@ -424,10 +413,9 @@ def DREAMS_signal_extract(psg_path, hypnogram_path, channel='FP1-A2', filter=Tru
     return main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std
 
 
-'''
+
 # 针对figshare数据集，需要输入<PSG信号文件地址subjects>
 # 返回PSG信号，长度，均值，标准差
-'''
 def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40]):
     all_channels = (
         'EEG Fp1-LE', 'EEG F3-LE', 'EEG C3-LE', 'EEG P3-LE', 'EEG O1-LE', 'EEG F7-LE', 'EEG T3-LE',
@@ -467,12 +455,142 @@ def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40
     return main_ext_raw_data, main_sub_len, main_mean, main_std
 
 
+hospital_path = r"E:\\hkk\\项目_可解释睡眠分期\\项目数据集\\depression_2017-2019拼英\\"
+def signal_extract_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.2, 40], stride=3):
+
+# 1.初始化无效数据、通道
+    ignore_data = []
+
+#【改通道】
+    all_channels = (
+        'F3', 'F4', 'C3', 'C4', 'O1', 'O2',
+        'M1', 'M2',
+        'E1', 'E2',
+        'ECG2', 'ECG1',
+        'Chin1', 'Chin2', 'LEG/L', 'LEG/R',
+        'AIRFLOW', 'ABDO', 'THOR', 'Snore', 'Pos Sensor', 'Ox Status', 'Pulse', 'SpO2', 'Nasal Pressure', 'CPAP Flow',
+        'CPAP Press', 'Pleth', 'Sum', 'PTT', 'Derived HR', 'Respiratory rate', 'Light', 'Manual Pos'
+        )
+
+    first_sub_flag = 0
+
+    for edf in edf_anno_list:
+            data = [ hospital_path + edf[0], hospital_path + edf[1]]
+            print("preparing: " + data[0] + " " + data[1])
+
+        # 【改数据获取】
+            signal2idx = {"eeg1": 0, "eeg2": 1, "eeg3": 2, "eeg4": 3, "eeg5": 4, "eeg6": 5,
+                          "eog1": 8, "eog2": 9}
+            all_channels_list = list(all_channels)
+            all_channels_list.remove(all_channels[signal2idx[channel]])
+            exclude_channels = tuple(all_channels_list)
+
+            sleep_signals = mne.io.read_raw_edf(data[0], verbose=True, exclude=exclude_channels, preload=True)
+            annot = mne.read_annotations(data[1])
+            # print("Annotation descriptions:", annot.description)
+
+        # 3.注释裁剪和事件生成
+        # 【改映射】
+        #     ann2label = {
+        #         "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3,
+        #          "Sleep stage R": 4, "Sleep stage ?": 5, "Movement time": 6}
+            ann2label = {
+                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage 4": 4, "Sleep stage R": 5}
+
+            ann2label_without_unknown_stages = {
+                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage 4": 4,
+                "Sleep stage R": 5}
+
+            # annot.crop(annot[1]['onset'] - 30 * 60, annot[-2]['onset'] + 30 * 60)
+
+            sleep_signals.set_annotations(annot, emit_warning=False)
+
+            events, _ = mne.events_from_annotations(
+                sleep_signals, event_id=ann2label, chunk_duration=30.)
+
+
+        # 4.信号过滤
+            if filter == True:
+                sleep_signals = sleep_signals.copy().filter(l_freq=freq[0], h_freq=freq[1])
+
+        # 5.划分 Epoch
+            tmax = 30. - 1. / sleep_signals.info['sfreq']
+            epochs_data = mne.Epochs(raw=sleep_signals, events=events,
+                                     event_id=ann2label, tmin=0., tmax=tmax, baseline=None, preload=True,
+                                     on_missing='warn')
+
+            epochs_data_without_unknown_stages = mne.Epochs(raw=sleep_signals, events=events,
+                                                            event_id=ann2label_without_unknown_stages, tmin=0.,
+                                                            tmax=tmax, baseline=None, preload=True, on_missing='warn')
+
+            print(
+                '===================================================================================================================================')
+            print(
+                f"                    Shape of Extracted Raw Signal for File {edf}                           ")
+            print(
+                f"                    Shape of Extracted Label for File {edf}                             ")
+            # print('===================================================================================================================================')
+
+            sig_epochs = []
+            label_epochs = []
+
+            mean_epochs = []
+            std_epochs = []
+
+            signal_mean = np.mean(np.array([epochs_data]))
+            signal_std = np.std(np.array([epochs_data]))
+
+            for ep in range(len(epochs_data)):
+                for sig in epochs_data[ep]:
+                    sig_epochs.append(sig)
+
+                sleep_stage = epochs_data[ep].event_id
+
+                if sleep_stage == {"Sleep stage W": 0}:
+                    label_epochs.append(0)
+                if sleep_stage == {"Sleep stage 1": 1}:
+                    label_epochs.append(1)
+                if sleep_stage == {"Sleep stage 2": 2}:
+                    label_epochs.append(2)
+                if sleep_stage == {"Sleep stage 3": 3}:
+                    label_epochs.append(3)
+                if sleep_stage == {"Sleep stage 4": 4}:
+                    label_epochs.append(3)
+                if sleep_stage == {"Sleep stage R": 5}:
+                    label_epochs.append(4)
+
+                mean_epochs.append(signal_mean)
+                std_epochs.append(signal_std)
+
+            sig_epochs = np.array(sig_epochs)
+            mean_epochs = np.array(mean_epochs)
+            std_epochs = np.array(std_epochs)
+            label_epochs = np.array(label_epochs)
+
+            if first_sub_flag == 0:
+                main_ext_raw_data = sig_epochs
+                main_labels = label_epochs
+                main_sub_len = np.array([len(epochs_data)])
+                main_mean = mean_epochs
+                main_std = std_epochs
+                first_sub_flag = 1
+            else:
+                main_ext_raw_data = np.concatenate((main_ext_raw_data, sig_epochs), axis=0)
+                main_labels = np.concatenate((main_labels, label_epochs), axis=0)
+                main_sub_len = np.concatenate((main_sub_len, np.array([len(epochs_data)])), axis=0)
+                main_mean = np.concatenate((main_mean, mean_epochs), axis=0)
+                main_std = np.concatenate((main_std, std_epochs), axis=0)
+
+    return main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std
+
+
+
 
 # 主函数，封装数据为h5py文件保存
 def main():
     args = parse_option()
 
-    # 将测试数据分成5个组
+    # Separate Subjects into 5 groups
     from sklearn.model_selection import KFold
     days = np.arange(1, 3)
     subjects = np.arange(0, 83)
