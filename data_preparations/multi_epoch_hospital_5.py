@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import mne
-from Tools.scripts.make_ctype import flags
 from sklearn.model_selection import KFold
 # from mne.time_frequency import tfr_morlet, psd_multitaper, psd_welch
 import h5py
@@ -72,13 +71,7 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
 
         # 5.划分 Epoch
             tmax = 30. - 1. / sleep_signals.info['sfreq']
-# 调试
-            '''
-            if 4 not in events[:, 2]:
-                print("WARNING: No R stage events detected in the entire recording")
-            else:
-                print("R stage event count:", np.sum(events[:, 2] == 4))
-            '''
+
             epochs_data = mne.Epochs(raw=sleep_signals, events=events,
                                      event_id=ann2label, tmin=0., tmax=tmax, baseline=None, preload=True,
                                      on_missing='warn')
@@ -173,7 +166,6 @@ if __name__ == '__main__':
     print(f"Found {len(edf_anno_list)} EDF and annotation file pairs.")
 
     # 5折交叉验证
-
     fivefold_list = []
     kf = KFold(n_splits=5, shuffle=True, random_state=2)
 
@@ -199,7 +191,6 @@ if __name__ == '__main__':
 
         # 遍历每个通道
         for channel in channels:
-
             main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std = (
                 signal_extract_sequential_hospital(train_files, channel=channel, filter=True, freq=[0.2, 40], stride=3)
             )

@@ -71,6 +71,7 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
 
         # 5.划分 Epoch
             tmax = 30. - 1. / sleep_signals.info['sfreq']
+
             epochs_data = mne.Epochs(raw=sleep_signals, events=events,
                                      event_id=ann2label, tmin=0., tmax=tmax, baseline=None, preload=True,
                                      on_missing='warn')
@@ -160,7 +161,7 @@ if __name__ == '__main__':
             tmp = filename.split('_mne_Annotation.txt')[0]  # 提取文件名前缀部分，比如 chenfang20170510
             for i in os.listdir(hospital_path):
                 if fnmatch.fnmatch(i, tmp + '.edf'):  # 查找以相同前缀并以 .edf 结尾的文件，比如chenfang20170510.edf
-                    edf_anno_list.append((i, filename))  # 将edf文件和注释文件的元组添加到列表中
+                    edf_anno_list.append((i, filename))  # 将edf文件、注释文件的元组添加到列表中
                     print(i + " matched " + filename)
     print(f"Found {len(edf_anno_list)} EDF and annotation file pairs.")
 
