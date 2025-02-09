@@ -213,9 +213,8 @@ class SleepEDF_Seq_MultiChan_Dataset_Main(Dataset):
             self.labels = np.concatenate((self.labels, read_h5py(label_file[i])),axis = 0)
 
         self.labels = torch.from_numpy(self.labels)
-        
+        bin_labels = self.labels.clamp(min=0).to(torch.int64)
 
-        bin_labels = np.bincount(self.labels)
         print(f"Labels count: {bin_labels}")
         print(f"Labels count weights: {1/bin_labels}")
         print(f"Shape of EEG : {self.eeg.shape} , EOG : {self.eog.shape}")#, EMG: {self.eeg2.shape}")
@@ -282,34 +281,35 @@ def get_dataset(device,args,only_val = False):
     args.val_data_list = list(args.val_data_list[0])
     args.val_data_list = [ int(x) for x in args.val_data_list if x.isdigit() ]
     
-    eeg_list = glob.glob(f'{args.data_path}/x*.h5')
+
+    eeg_list = glob.glob(f'{args.data_path}/eeg1_x*.h5')
     eeg_list.sort()
-    [train_eeg_list, val_eeg_list] = split_data(eeg_list,args.train_data_list,args.val_data_list)
+    [train_eeg_list, val_eeg_list] = split_data(eeg_list, args.train_data_list, args.val_data_list)
 
-    mean_eeg_list = glob.glob(f'{args.data_path}/mean*.h5')
+    mean_eeg_list = glob.glob(f'{args.data_path}/eeg1_mean*.h5')
     mean_eeg_list.sort()
-    [train_mean_eeg_list, val_mean_eeg_list] = split_data(mean_eeg_list,args.train_data_list,args.val_data_list)
+    [train_mean_eeg_list, val_mean_eeg_list] = split_data(mean_eeg_list, args.train_data_list, args.val_data_list)
 
-    sd_eeg_list = glob.glob(f'{args.data_path}/std*.h5')
+    sd_eeg_list = glob.glob(f'{args.data_path}/eeg1_std*.h5')
     sd_eeg_list.sort()
-    [train_sd_eeg_list, val_sd_eeg_list] = split_data(sd_eeg_list,args.train_data_list,args.val_data_list)
+    [train_sd_eeg_list, val_sd_eeg_list] = split_data(sd_eeg_list, args.train_data_list, args.val_data_list)
 
-    eog_list = glob.glob(f'{args.data_path}/eog*.h5')
+    eog_list = glob.glob(f'{args.data_path}/eog1_x*.h5')
     eog_list.sort()
-    [train_eog_list, val_eog_list] = split_data(eog_list,args.train_data_list,args.val_data_list)
+    [train_eog_list, val_eog_list] = split_data(eog_list, args.train_data_list, args.val_data_list)
 
-    mean_eog_list = glob.glob(f'{args.data_path}/eog_m*.h5')
+    mean_eog_list = glob.glob(f'{args.data_path}/eog1_mean*.h5')
     mean_eog_list.sort()
-    [train_mean_eog_list, val_mean_eog_list] = split_data(mean_eog_list,args.train_data_list,args.val_data_list)
+    [train_mean_eog_list, val_mean_eog_list] = split_data(mean_eog_list, args.train_data_list, args.val_data_list)
 
-    sd_eog_list = glob.glob(f'{args.data_path}/eog_s*.h5')
+    sd_eog_list = glob.glob(f'{args.data_path}/eog1_std*.h5')
     sd_eog_list.sort()
-    [train_sd_eog_list, val_sd_eog_list] = split_data(sd_eog_list,args.train_data_list,args.val_data_list)
+    [train_sd_eog_list, val_sd_eog_list] = split_data(sd_eog_list, args.train_data_list, args.val_data_list)
 
-    label_list = glob.glob(f'{args.data_path}/y*.h5')
+    label_list = glob.glob(f'{args.data_path}/labels*.h5')
     label_list.sort()
-    [train_label_list, val_label_list] = split_data(label_list,args.train_data_list,args.val_data_list)
-    
+    [train_label_list, val_label_list] = split_data(label_list, args.train_data_list, args.val_data_list)
+
     if only_val == False:
         print("Training Data Files: ===========================>")
         print(train_eeg_list)

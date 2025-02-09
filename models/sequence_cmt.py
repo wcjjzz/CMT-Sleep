@@ -8,6 +8,7 @@ import torch.nn as nn
 import time
 import argparse
 from torch import Tensor
+from torch.fx.experimental.unification.core import seq
 from torch.nn import functional as F
 from torch.nn import Module
 from torch.nn import MultiheadAttention
@@ -382,7 +383,7 @@ def train_seq_cmt(Net, train_data_loader, val_data_loader, criterion,optimizer, 
             val_eeg,val_eog, val_labels = data_val
             cur_val_batch_size = len(val_eeg)
             pred,_ = Net(val_eeg.float().to(device), val_eog.float().to(device))
-
+            val_loss=0
             for ep in range(args.num_seq):
                   val_loss += criterion(pred[ep].cpu(), val_labels[:,ep])
 

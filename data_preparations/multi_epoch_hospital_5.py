@@ -10,8 +10,8 @@ from sklearn.model_selection import KFold
 import h5py
 
 #path必须以\\结尾，否则传入的路径与文件名拼接错误
-hospital_path = "C:\\Users\\LYT\\Desktop\\数据集\\hospital_depression\\depression_pinyin - 副本\\"
-save_path = f"./extract_dataset_multi_epoch_hospital/"
+hospital_path = r"C:\Users\Tian_Yumi\Downloads\BaiduNetdiskDownload\sleep_data_PSG(depression)\2019.12.10-2019.12.11\2017-2019\拼音\depression\\"
+save_path = r"./extract_dataset_multi_epoch_hospital/"
 
 def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.2, 40], stride=3):
 
@@ -71,6 +71,7 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
 
         # 5.划分 Epoch
             tmax = 30. - 1. / sleep_signals.info['sfreq']
+
 
             epochs_data = mne.Epochs(raw=sleep_signals, events=events,
                                      event_id=ann2label, tmin=0., tmax=tmax, baseline=None, preload=True,
@@ -149,10 +150,9 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
 
     return main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std
 
-
-if __name__ == '__main__':
-# 需要处理的通道
-    channels = ["eeg1", "eeg2", "eeg3"]
+def main():
+    # 需要处理的通道
+    channels = ["eeg1", "eog1"]
 
     edf_anno_list = []
     # 查找所有的edf文件和对应的注释文件【列表edf_anno_list】
@@ -164,7 +164,7 @@ if __name__ == '__main__':
                     edf_anno_list.append((i, filename))  # 将edf文件、注释文件的元组添加到列表中
                     print(i + " matched " + filename)
     print(f"Found {len(edf_anno_list)} EDF and annotation file pairs.")
-
+    print("===================================================================================")
     # 5折交叉验证
     fivefold_list = []
     kf = KFold(n_splits=5, shuffle=True, random_state=2)
@@ -195,29 +195,31 @@ if __name__ == '__main__':
                 signal_extract_sequential_hospital(train_files, channel=channel, filter=True, freq=[0.2, 40], stride=3)
             )
 
-            print(f"Channel: {channel}, Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
+            print(
+                f"Channel: {channel}, Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
 
             # 保存信号数据
-            with h5py.File(f'{save_path}{channel}_x{i + 1}.h5', 'w') as f:
+            with h5py.File(f'{save_path}/{channel}_x{i + 1}.h5', 'w') as f:
                 f.create_dataset(channel, data=main_ext_raw_data)
 
             # 保存均值
-            with h5py.File(f'{save_path}{channel}_m{i + 1}.h5', 'w') as f:
+            with h5py.File(f'{save_path}/{channel}_mean{i + 1}.h5', 'w') as f:
                 f.create_dataset('mean', data=main_mean)
 
             # 保存标准差
-            with h5py.File(f'{save_path}{channel}_std{i + 1}.h5', 'w') as f:
+            with h5py.File(f'{save_path}/{channel}_std{i + 1}.h5', 'w') as f:
                 f.create_dataset('std', data=main_std)
 
             # 保存标签数据（只保存一次）
             if not label_saved:
-                with h5py.File(f'{save_path}y{i + 1}.h5', 'w') as f:
+                with h5py.File(f'{save_path}/labels{i + 1}.h5', 'w') as f:
                     f.create_dataset('labels', data=main_labels)
                 label_saved = True
 
-        print(f"Fold {i + 1} complete. Results for all channels saved.")
+        print(f"Fold {i + 1} complete. ")
+    print("Results for all channels saved.")
 
+if __name__ == '__main__':
 
-
-
+    main()
 
