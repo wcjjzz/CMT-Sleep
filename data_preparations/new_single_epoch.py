@@ -459,7 +459,7 @@ def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40
 
 
 
-def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], path=str(hospital_paths)):
+def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], path=str(hospital_paths),stride=3):
 
 # 1.初始化无效数据、通道
     ignore_data = []
