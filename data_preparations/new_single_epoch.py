@@ -6,9 +6,8 @@ Sleep-EDF, DREAMS, Figshare, hospital
 
 
 #path必须以\\结尾，否则传入的路径与文件名拼接错误
-hospital_paths = [r"/root/autodl-tmp/hospital_depression/depression_2019/",
-                 r"/root/autodl-tmp/hospital_depression/depression_hanzi/",
-                 r"/root/autodl-tmp/hospital_depression/depression_pinyin/"]
+hospital_paths = r"/root/autodl-tmp/hospital_depression/",
+                 
 save_path = r"./extract_dataset_single_epoch_hospital/"
 
 
@@ -459,7 +458,7 @@ def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40
 
 
 
-def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], path=str(hospital_paths),stride=3):
+def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], path=str(hospital_paths)):
 
 # 1.初始化无效数据、通道
     ignore_data = []
@@ -469,11 +468,11 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
         'F3', 'F4', 'C3', 'C4', 'O1', 'O2',
         'M1', 'M2',
         'E1', 'E2',
-        'ECG2', 'ECG1',
-        'Chin1', 'Chin2', 'LEG/L', 'LEG/R',
-        'AIRFLOW', 'ABDO', 'THOR', 'Snore', 'Pos Sensor', 'Ox Status', 'Pulse', 'SpO2', 'Nasal Pressure', 'CPAP Flow',
-        'CPAP Press', 'Pleth', 'Sum', 'PTT', 'Derived HR', 'Respiratory rate', 'Light', 'Manual Pos'
-        )
+        'ECG1', 'ECG2',
+        'Chin1', 'Chin2', 'Chin3', 'LEG/L', 'LEG/R',
+        'Airflow', 'Abdo', 'Thor', 'Snore', 'Sum', 'PosSensor', 'Ox Status', 'Pulse', 'SpO2', 'Nasal Pressure', 'CPAP Flow',
+        'CPAP Press', 'Pleth', 'Sum', 'Derived HR', 'Light', 'Manual Pos', 'Respiratory Rate'
+    )
 
     first_sub_flag = 0
 
@@ -638,7 +637,7 @@ def main():
         # 遍历每个通道
         for channel in channels:
             main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std = (
-                signal_extract_hospital(train_files, channel=channel, filter=True, freq=[0.2, 40], stride=3,path=path)
+                signal_extract_hospital(train_files, channel=channel, filter=True, freq=[0.2, 40],path=path)
             )
 
             print(

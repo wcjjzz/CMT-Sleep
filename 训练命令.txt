@@ -28,5 +28,9 @@ cd /root/autodl-tmp/CMT-Sleep/utils/
 python hospital_hyp.py
 
 
-数据集预处理hospital,single
+数据集预处理hospital,single 保存路径是./extract_dataset_single_epoch_hospital
 python /root/autodl-tmp/CMT-Sleep/data_preparations/new_single_epoch.py
+
+训练seq模型
+
+
