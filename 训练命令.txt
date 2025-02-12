@@ -1,6 +1,14 @@
 激活虚拟环境
 conda activate my-env
 
+配置python环境
+conda create -n cmt python=3.10
+conda activate cmt
+pip install  torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
+pip install torch==1.11.0+cu113 -f https://mirror.sjtu.edu.cn/pytorch-wheels/cu113/?mirror_intel_list
+cd /root/autodl-tmp/CMT-Sleep
+pip3 install -r requirements.txt
+
 查看版本
 python -V
 
@@ -12,6 +20,7 @@ conda env list
 
 删除某个环境
 conda remove --name xh-marking-client-qt --all
+
 
 hospital标签预处理（每次文件夹路径要自己改）
 新开终端：
