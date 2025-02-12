@@ -123,7 +123,7 @@ def main():
   #Separate Subjects into 5 groups
   from sklearn.model_selection import KFold
   days = np.arange(1,3) 
-  subjects = np.arange(0,83) 
+  subjects = np.arange(0,5)
   print(f"Subjects : {subjects}")
   print(f"Days : {days}")
 

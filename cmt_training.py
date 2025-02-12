@@ -18,6 +18,16 @@ import glob
 import os
 from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange, Reduce
+<<<<<<< Updated upstream
+=======
+from datasets.sleep_edf import split_data, SleepEDF_MultiChan_Dataset, get_dataset,get_dataset_new
+from models.epoch_cmt import Epoch_Cross_Transformer_Network, train_epoch_cmt
+from models.sequence_cmt import Seq_Cross_Transformer_Network  # as Seq_Cross_Transformer_Network
+from models.sequence_cmt import train_seq_cmt
+from utils.metrics import accuracy, kappa, g_mean, plot_confusion_matrix, confusion_matrix, AverageMeter
+
+warnings.filterwarnings("ignore")
+>>>>>>> Stashed changes
 print(f"Torch Version : {torch.__version__}")
 
 from datasets.sleep_edf import split_data, SleepEDF_MultiChan_Dataset, get_dataset
@@ -39,6 +49,7 @@ def parse_option():
     parser.add_argument('--model_path', type=str, default="",   help='Path to saved checkpoint for retraining')
     parser.add_argument('--save_model_freq', type=int, default = 50 ,  help='Frequency of saving the model checkpoint')
 
+<<<<<<< Updated upstream
     #model parameters
     parser.add_argument('--model_type', type=str, default = 'Epoch'  ,choices=['Epoch', 'Seq'],  help='Model type')
     parser.add_argument('--d_model', type=int, default = 128,  help='Embedding size of the CMT')
@@ -68,6 +79,37 @@ def parse_option():
     parser.add_argument('--nep_project', type=str, default='', help='Neptune Project Name')
     parser.add_argument('--nep_api', type=str, default='', help='Neptune API Token')
         
+=======
+    # model parameters
+    parser.add_argument('--model_type', type=str, default='Epoch', choices=['Epoch', 'Seq'], help='Model type')
+    parser.add_argument('--d_model', type=int, default=128, help='Embedding size of the CMT')
+    parser.add_argument('--dim_feedforward', type=int, default=512, help='No of neurons feed forward block')
+    parser.add_argument('--window_size', type=int, default=50, help='Size of non-overlapping window')
+    parser.add_argument('--num_seq', type=int, default=5, help='Number of epochs in a PSG sequence')
+    # training parameters
+    parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
+
+    # For weighted loss
+    parser.add_argument('--weigths', type=list, default=[1., 2., 1., 2., 2.], help='Weights for cross entropy loss')
+
+    # For Optimizer
+    parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
+    parser.add_argument('--beta_1', type=float, default=0.9, help='beta 1 for adam optimizer')
+    parser.add_argument('--beta_2', type=float, default=0.999, help='beta 2 for adam optimizer')
+    parser.add_argument('--eps', type=float, default=1e-9, help='eps for adam optimizer')
+    parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight_decay  for adam optimizer')
+    parser.add_argument('--n_epochs', type=int, default=200, help='No of training epochs')
+
+    # For scheduler
+    parser.add_argument('--step_size', type=float, default=30, help='Step size for LR scheduler')
+    parser.add_argument('--gamma', type=float, default=0.5, help='Gamma for LR scheduler')
+
+    # Neptune
+    parser.add_argument('--is_neptune', type=bool, default=False, help='Is neptune used to track experiments')
+    parser.add_argument('--nep_project', type=str, default='', help='Neptune Project Name')
+    parser.add_argument('--nep_api', type=str, default='', help='Neptune API Token')
+    parser.add_argument('--new_name_rule', type=bool, default=False, help='use new name rule of dataset ,for hospital EDF')
+>>>>>>> Stashed changes
     opt = parser.parse_args()
     
     return opt
@@ -92,9 +134,17 @@ def main():
     
     #Get Dataset
     print("Getting Dataset ===================================>")
+<<<<<<< Updated upstream
     train_data_loader, val_data_loader = get_dataset(device,args)
     
     
+=======
+    if args.new_name_rule==True:
+        train_data_loader, val_data_loader = get_dataset_new(device, args)
+    else:
+        train_data_loader, val_data_loader = get_dataset(device, args)
+
+>>>>>>> Stashed changes
     ##Load Model
     if args.model_type == "Epoch":   # Initialize epoch cross-modal transformer
         if args.is_retrain:

@@ -132,7 +132,7 @@ def signal_extract_sequential(subjects, days, channel = 'eeg1', filter = True, f
 #Separate Subjects into 5 groups
 from sklearn.model_selection import KFold
 days = np.arange(1,3) 
-subjects = np.arange(0,83) 
+subjects = np.arange(0,5)
 print(f"Subjects : {subjects}")
 print(f"Days : {days}")
 
@@ -304,7 +304,7 @@ hf.close()
 
 
 eog1, labels_1, len_1, eog_m1, eog_std1 = signal_extract_sequential(sub_1, days, channel = 'eog', filter = True, freq = [0.2,40], stride = 5)
-print(f"Train data shape : {eog_1.shape}, Train label shape : {labels_1.shape}")
+print(f"Train data shape : {eog1.shape}, Train label shape : {labels_1.shape}")
 
 #### Save data as .h5. ######
 hf = h5py.File(f'{save_path}/eog1.h5', 'w')
