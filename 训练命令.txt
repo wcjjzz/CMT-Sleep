@@ -1,0 +1,23 @@
+激活虚拟环境
+conda activate my-env
+
+查看版本
+python -V
+
+退出虚拟环境到base环境中
+conda deactivate
+
+查看所有的环境
+conda env list
+
+删除某个环境
+conda remove --name xh-marking-client-qt --all
+
+hospital标签预处理（每次文件夹路径要自己改）
+新开终端：
+cd /root/autodl-tmp/CMT-Sleep/utils/
+python hospital_hyp.py
+
+
+数据集预处理hospital,single
+python /root/autodl-tmp/CMT-Sleep/data_preparations/new_single_epoch.py

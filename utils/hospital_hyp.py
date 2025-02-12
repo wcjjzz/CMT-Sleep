@@ -88,7 +88,7 @@ def convert_directory_RK(directory):
 
 def main():
     # 指定包含输入文件的目录（绝对路径，需更改）会将新注释文件生成到当前文件夹中
-    directory = r"C:\Users\LYT\Desktop\数据集\hospital_depression\depression_pinyin - 副本"
+    directory = r"/root/autodl-tmp/hospital_depression/depression_pinyin"
     # 调用函数转换目录中的每个文件
     convert_directory_AASM(directory)
 

@@ -6,7 +6,7 @@ Sleep-EDF, DREAMS, Figshare, hospital
 
 
 #path必须以\\结尾，否则传入的路径与文件名拼接错误
-hospital_path = r"C:\Users\Tian_Yumi\Downloads\BaiduNetdiskDownload\sleep_data_PSG(depression)\2019.12.10-2019.12.11\2017-2019\拼音\depression\\"
+hospital_path = r"/root/autodl-tmp/hospital_depression/"
 save_path = r"./extract_dataset_single_epoch_hospital/"
 
 
