@@ -1,4 +1,4 @@
-#自行选择CPU或CUDA版本的torch1.10.0
+#自行选择CPU或CUDA版本的torch1.11.0
 #pip install  torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
 #pip install torch==1.11.0+cu113 -f https://mirror.sjtu.edu.cn/pytorch-wheels/cu113/?mirror_intel_list
 #python==3.10
@@ -10,8 +10,5 @@ scikit-image==0.23.1
 scikit-learn==1.4.2
 einops==0.7.0
 mne==1.6.1
-jupyterlab~=4.2.5
-torch~=1.11.0+cu113
-torchvision~=0.12.0+cu113
 pandas~=2.2.2
 pyEDFlib~=0.1.38
