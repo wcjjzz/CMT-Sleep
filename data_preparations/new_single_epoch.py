@@ -467,11 +467,11 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
         'F3', 'F4', 'C3', 'C4', 'O1', 'O2',
         'M1', 'M2',
         'E1', 'E2',
-        'ECG2', 'ECG1',
-        'Chin1', 'Chin2', 'LEG/L', 'LEG/R',
-        'AIRFLOW', 'ABDO', 'THOR', 'Snore', 'Pos Sensor', 'Ox Status', 'Pulse', 'SpO2', 'Nasal Pressure', 'CPAP Flow',
-        'CPAP Press', 'Pleth', 'Sum', 'PTT', 'Derived HR', 'Respiratory rate', 'Light', 'Manual Pos'
-        )
+        'ECG1', 'ECG2',
+        'Chin1', 'Chin2', 'Chin3', 'LEG/L', 'LEG/R',
+        'Airflow', 'Abdo', 'Thor', 'Snore', 'Sum', 'PosSensor', 'Ox Status', 'Pulse', 'SpO2', 'Nasal Pressure', 'CPAP Flow',
+        'CPAP Press', 'Pleth', 'Sum', 'Derived HR', 'Light', 'Manual Pos', 'Respiratory Rate'
+    )
 
     first_sub_flag = 0
 
