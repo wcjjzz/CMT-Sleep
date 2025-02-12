@@ -591,21 +591,22 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
 def main():
     from sklearn.model_selection import KFold
     import fnmatch
-    args = parse_option()
-    if args.save_path !="": save_path  = args.save_path
-    if args.data_path !="": hospital_path  = args.data_path
+    # args = parse_option()
+    # if args.save_path !="": save_path  = args.save_path
+    # if args.data_path !="": hospital_path  = args.data_path
     # 需要处理的通道
     channels = ["eeg1", "eog1"]
 
     edf_anno_list = []
     # 查找所有的edf文件和对应的注释文件【列表edf_anno_list】
-    for filename in os.listdir(hospital_path):
-        if fnmatch.fnmatch(filename, '*_mne_Annotation.txt'):  # 查找以 "_mne_Annotation.txt" 结尾的文件
-            tmp = filename.split('_mne_Annotation.txt')[0]  # 提取文件名前缀部分，比如 chenfang20170510
-            for i in os.listdir(hospital_path):
-                if fnmatch.fnmatch(i, tmp + '.edf'):  # 查找以相同前缀并以 .edf 结尾的文件，比如chenfang20170510.edf
-                    edf_anno_list.append((i, filename))  # 将edf文件、注释文件的元组添加到列表中
-                    print(i + " matched " + filename)
+    for path in hospital_path:
+        for filename in os.listdir(path):
+            if fnmatch.fnmatch(filename, '*_mne_Annotation.txt'):  # 查找以 "_mne_Annotation.txt" 结尾的文件
+                tmp = filename.split('_mne_Annotation.txt')[0]  # 提取文件名前缀部分，比如 chenfang20170510
+                for i in os.listdir(hospital_path):
+                    if fnmatch.fnmatch(i, tmp + '.edf'):  # 查找以相同前缀并以 .edf 结尾的文件，比如chenfang20170510.edf
+                        edf_anno_list.append((i, filename))  # 将edf文件、注释文件的元组添加到列表中
+                        print(i + " matched " + filename)
     print(f"Found {len(edf_anno_list)} EDF and annotation file pairs.")
     print("===================================================================================")
     # 5折交叉验证
