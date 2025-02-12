@@ -13,7 +13,7 @@ import h5py
 hospital_path = r"C:\Users\Tian_Yumi\Downloads\BaiduNetdiskDownload\sleep_data_PSG(depression)\2019.12.10-2019.12.11\2017-2019\拼音\depression\\"
 save_path = r"./extract_dataset_multi_epoch_hospital/"
 
-def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.2, 40], stride=3):
+def signal_extract_sequential_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], stride=5):
 
 # 1.初始化无效数据、通道
     ignore_data = []
@@ -31,9 +31,9 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
 
     first_sub_flag = 0
 
-    for edf in edf_anno_list:
+    for pair in edf_anno_pairs:
 
-            data = [ hospital_path + edf[0], hospital_path + edf[1]]
+            data = [ hospital_path + pair[0], hospital_path + pair[1]]
             print("preparing: " + data[0] + " " + data[1])
 
         # 【改数据获取】
@@ -84,9 +84,9 @@ def signal_extract_sequential_hospital(edf_anno_list, channel='eeg1', filter=Tru
             print(
                 '===================================================================================================================================')
             print(
-                f"                    Shape of Extracted Raw Signal for File {edf}                           ")
+                f"                    Shape of Extracted Raw Signal for File {pair}                           ")
             print(
-                f"                    Shape of Extracted Label for File {edf}                             ")
+                f"                    Shape of Extracted Label for File {pair}                             ")
             # print('===================================================================================================================================')
 
             sig_epochs = []
@@ -197,26 +197,41 @@ def main():
 
             print(
                 f"Channel: {channel}, Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
+            if "eeg" in channel:
+                # 保存信号数据
+                with h5py.File(f'{save_path}/eeg1_x{i + 1}.h5', 'w') as f:
+                    f.create_dataset(channel, data=main_ext_raw_data)
 
-            # 保存信号数据
-            with h5py.File(f'{save_path}/{channel}_x{i + 1}.h5', 'w') as f:
-                f.create_dataset(channel, data=main_ext_raw_data)
+                # 保存均值
+                with h5py.File(f'{save_path}/eeg1_mean{i + 1}.h5', 'w') as f:
+                    f.create_dataset('mean', data=main_mean)
 
-            # 保存均值
-            with h5py.File(f'{save_path}/{channel}_mean{i + 1}.h5', 'w') as f:
-                f.create_dataset('mean', data=main_mean)
+                # 保存标准差
+                with h5py.File(f'{save_path}/eeg1_std{i + 1}.h5', 'w') as f:
+                    f.create_dataset('std', data=main_std)
 
-            # 保存标准差
-            with h5py.File(f'{save_path}/{channel}_std{i + 1}.h5', 'w') as f:
-                f.create_dataset('std', data=main_std)
 
+            if "eog" in channel:
+                # 保存信号数据
+                with h5py.File(f'{save_path}/eog1_x{i + 1}.h5', 'w') as f:
+                    f.create_dataset(channel, data=main_ext_raw_data)
+
+                # 保存均值
+                with h5py.File(f'{save_path}/eog1_mean{i + 1}.h5', 'w') as f:
+                    f.create_dataset('mean', data=main_mean)
+
+                # 保存标准差
+                with h5py.File(f'{save_path}/eog1_std{i + 1}.h5', 'w') as f:
+                    f.create_dataset('std', data=main_std)
+            else:
+                print("Warning: invalid channel",channels)
             # 保存标签数据（只保存一次）
             if not label_saved:
                 with h5py.File(f'{save_path}/labels{i + 1}.h5', 'w') as f:
                     f.create_dataset('labels', data=main_labels)
                 label_saved = True
+            print(f"Fold {i + 1} complete.Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
 
-        print(f"Fold {i + 1} complete. ")
     print("Results for all channels saved.")
 
 if __name__ == '__main__':

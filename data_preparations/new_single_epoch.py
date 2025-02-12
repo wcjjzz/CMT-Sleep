@@ -5,9 +5,10 @@ Sleep-EDF, DREAMS, Figshare, hospital
 '''
 
 
+#path必须以\\结尾，否则传入的路径与文件名拼接错误
+hospital_path = r"C:\Users\Tian_Yumi\Downloads\BaiduNetdiskDownload\sleep_data_PSG(depression)\2019.12.10-2019.12.11\2017-2019\拼音\depression\\"
+save_path = r"./extract_dataset_single_epoch_hospital/"
 
-# 下载mne库
-# !pip install mne
 
 
 
@@ -455,8 +456,8 @@ def figshare_signal_extract(subjects, channel='eeg1', filter=True, freq=[0.2, 40
     return main_ext_raw_data, main_sub_len, main_mean, main_std
 
 
-hospital_path = r"E:\\hkk\\项目_可解释睡眠分期\\项目数据集\\depression_2017-2019拼英\\"
-def signal_extract_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.2, 40], stride=3):
+
+def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0.2, 40], stride=3):
 
 # 1.初始化无效数据、通道
     ignore_data = []
@@ -474,8 +475,8 @@ def signal_extract_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.
 
     first_sub_flag = 0
 
-    for edf in edf_anno_list:
-            data = [ hospital_path + edf[0], hospital_path + edf[1]]
+    for pair in edf_anno_pairs:
+            data = [ hospital_path + pair[0], hospital_path + pair[1]]
             print("preparing: " + data[0] + " " + data[1])
 
         # 【改数据获取】
@@ -526,9 +527,9 @@ def signal_extract_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.
             print(
                 '===================================================================================================================================')
             print(
-                f"                    Shape of Extracted Raw Signal for File {edf}                           ")
+                f"                    Shape of Extracted Raw Signal for File {pair}                           ")
             print(
-                f"                    Shape of Extracted Label for File {edf}                             ")
+                f"                    Shape of Extracted Label for File {pair}                             ")
             # print('===================================================================================================================================')
 
             sig_epochs = []
@@ -588,244 +589,93 @@ def signal_extract_hospital(edf_anno_list, channel='eeg1', filter=True, freq=[0.
 
 # 主函数，封装数据为h5py文件保存
 def main():
-    args = parse_option()
-
-    # Separate Subjects into 5 groups
     from sklearn.model_selection import KFold
-    days = np.arange(1, 3)
-    subjects = np.arange(0, 83)
-    print(f"Subjects : {subjects}")
-    print(f"Days : {days}")
+    import fnmatch
+    args = parse_option()
+    if args.save_path !="": save_path  = args.save_path
+    if args.data_path !="": hospital_path  = args.data_path
+    # 需要处理的通道
+    channels = ["eeg1", "eog1"]
 
+    edf_anno_list = []
+    # 查找所有的edf文件和对应的注释文件【列表edf_anno_list】
+    for filename in os.listdir(hospital_path):
+        if fnmatch.fnmatch(filename, '*_mne_Annotation.txt'):  # 查找以 "_mne_Annotation.txt" 结尾的文件
+            tmp = filename.split('_mne_Annotation.txt')[0]  # 提取文件名前缀部分，比如 chenfang20170510
+            for i in os.listdir(hospital_path):
+                if fnmatch.fnmatch(i, tmp + '.edf'):  # 查找以相同前缀并以 .edf 结尾的文件，比如chenfang20170510.edf
+                    edf_anno_list.append((i, filename))  # 将edf文件、注释文件的元组添加到列表中
+                    print(i + " matched " + filename)
+    print(f"Found {len(edf_anno_list)} EDF and annotation file pairs.")
+    print("===================================================================================")
+    # 5折交叉验证
     fivefold_list = []
-    kf = KFold(n_splits=5, shuffle=True  # 5, 2
-               , random_state=2
-               )
+    kf = KFold(n_splits=5, shuffle=True, random_state=2)
 
-    sub_1, sub_2, sub_3, sub_4, sub_5 = kf.split(subjects)
-    sub_1 = sub_1[1]
-    sub_2 = sub_2[1]
-    sub_3 = sub_3[1]
-    sub_4 = sub_4[1]
-    sub_5 = sub_5[1]
-
-    print(f"Subjects Group 1 : {sub_1}")
-    print(f"Subjects Group 2 : {sub_2}")
-    print(f"Subjects Group 3 : {sub_3}")
-    print(f"Subjects Group 4 : {sub_4}")
-    print(f"Subjects Group 5 : {sub_5}")
-
-    for i in sub_1:
-        if i in subjects:
-            subjects[i] = 0
-        else:
-            print("Error")
-
-    for i in sub_2:
-        if i in subjects:
-            subjects[i] = 0
-        else:
-            print("Error")
-
-    for i in sub_3:
-        if i in subjects:
-            subjects[i] = 0
-        else:
-            print("Error")
-
-    for i in sub_4:
-        if i in subjects:
-            subjects[i] = 0
-        else:
-            print("Error")
-
-    for i in sub_5:
-        if i in subjects:
-            subjects[i] = 0
-        else:
-            print("Error")
-
-    print(subjects)
-
-    # ==============================================================>
-    # Change Channels to extract data for other PSG channels 'eeg1', ''eog', 'eeg2'
-    # ==============================================================>
-
-    # ==============================================================>
-    # For 'eeg1'
-    # ==============================================================>
-
-    ## Save Path
-    save_path = args.save_path
+    # Save Path
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
-    eeg1_1, labels_1, len_1, eeg1_m1, eeg1_std1 = signal_extract(sub_1, days, channel='eeg1', filter=True,
-                                                                 freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_1.shape}, Train label shape : {labels_1.shape}")
+    # 使用 KFold 来划分数据
+    for train_index, test_index in kf.split(edf_anno_list):
+        fivefold_list.append((train_index, test_index))
 
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/x1.h5', 'w')
-    hf.create_dataset('data', data=eeg1_1)
-    hf.close()
-    hf = h5py.File(f'{save_path}/y1.h5', 'w')
-    hf.create_dataset('data', data=labels_1)
-    hf.close()
-    hf = h5py.File(f'{save_path}/mean1.h5', 'w')
-    hf.create_dataset('data', data=eeg1_m1)
-    hf.close()
-    hf = h5py.File(f'{save_path}/std1.h5', 'w')
-    hf.create_dataset('data', data=eeg1_std1)
-    hf.close()
+    # 遍历每个 fold
+    for i, (train_index, test_index) in enumerate(fivefold_list):
+        # 获取当前 fold 的训练集信号文件和注释文件列表
+        train_files = [edf_anno_list[idx] for idx in train_index]  # 信号文件和注释文件的元组列表
 
-    eeg1_2, labels_2, len_2, eeg1_m2, eeg1_std2 = signal_extract(sub_2, days, channel='eeg1', filter=True,
-                                                                 freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_2.shape}, Train label shape : {labels_2.shape}")
+        print(f"Fold {i + 1} - Train Files EDF:")
+        for file_pair in train_files:
+            print(f"EDF File: {file_pair[0]}")
 
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/x2.h5', 'w')
-    hf.create_dataset('data', data=eeg1_2)
-    hf.close()
-    hf = h5py.File(f'{save_path}/y2.h5', 'w')
-    hf.create_dataset('data', data=labels_2)
-    hf.close()
-    hf = h5py.File(f'{save_path}/mean2.h5', 'w')
-    hf.create_dataset('data', data=eeg1_m2)
-    hf.close()
-    hf = h5py.File(f'{save_path}/std2.h5', 'w')
-    hf.create_dataset('data', data=eeg1_std2)
-    hf.close()
+        # 标签数据保存标志
+        label_saved = False
 
-    eeg1_3, labels_3, len_3, eeg1_m3, eeg1_std3 = signal_extract(sub_3, days, channel='eeg1', filter=True,
-                                                                 freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_3.shape}, Train label shape : {labels_3.shape}")
+        # 遍历每个通道
+        for channel in channels:
+            main_ext_raw_data, main_labels, main_sub_len, main_mean, main_std = (
+                signal_extract_hospital(train_files, channel=channel, filter=True, freq=[0.2, 40], stride=3)
+            )
 
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/x3.h5', 'w')
-    hf.create_dataset('data', data=eeg1_3)
-    hf.close()
-    hf = h5py.File(f'{save_path}/y3.h5', 'w')
-    hf.create_dataset('data', data=labels_3)
-    hf.close()
-    hf = h5py.File(f'{save_path}/mean3.h5', 'w')
-    hf.create_dataset('data', data=eeg1_m3)
-    hf.close()
-    hf = h5py.File(f'{save_path}/std3.h5', 'w')
-    hf.create_dataset('data', data=eeg1_std3)
-    hf.close()
+            print(
+                f"Channel: {channel}, Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
+            if "eeg" in channel:
+                # 保存信号数据
+                with h5py.File(f'{save_path}/eeg1_x{i + 1}.h5', 'w') as f:
+                    f.create_dataset(channel, data=main_ext_raw_data)
 
-    eeg1_4, labels_4, len_4, eeg1_m4, eeg1_std4 = signal_extract(sub_4, days, channel='eeg1', filter=True,
-                                                                 freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_4.shape}, Train label shape : {labels_4.shape}")
+                # 保存均值
+                with h5py.File(f'{save_path}/eeg1_mean{i + 1}.h5', 'w') as f:
+                    f.create_dataset('mean', data=main_mean)
 
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/x4.h5', 'w')
-    hf.create_dataset('data', data=eeg1_4)
-    hf.close()
-    hf = h5py.File(f'{save_path}/y4.h5', 'w')
-    hf.create_dataset('data', data=labels_4)
-    hf.close()
-    hf = h5py.File(f'{save_path}/mean4.h5', 'w')
-    hf.create_dataset('data', data=eeg1_m4)
-    hf.close()
-    hf = h5py.File(f'{save_path}/std4.h5', 'w')
-    hf.create_dataset('data', data=eeg1_std4)
-    hf.close()
+                # 保存标准差
+                with h5py.File(f'{save_path}/eeg1_std{i + 1}.h5', 'w') as f:
+                    f.create_dataset('std', data=main_std)
 
-    eeg1_5, labels_5, len_5, eeg1_m5, eeg1_std5 = signal_extract(sub_5, days, channel='eeg1', filter=True,
-                                                                 freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_5.shape}, Train label shape : {labels_5.shape}")
+            if "eog" in channel:
+                # 保存信号数据
+                with h5py.File(f'{save_path}/eog1_x{i + 1}.h5', 'w') as f:
+                    f.create_dataset(channel, data=main_ext_raw_data)
 
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/x5.h5', 'w')
-    hf.create_dataset('data', data=eeg1_5)
-    hf.close()
-    hf = h5py.File(f'{save_path}/y5.h5', 'w')
-    hf.create_dataset('data', data=labels_5)
-    hf.close()
-    hf = h5py.File(f'{save_path}/mean5.h5', 'w')
-    hf.create_dataset('data', data=eeg1_m5)
-    hf.close()
-    hf = h5py.File(f'{save_path}/std5.h5', 'w')
-    hf.create_dataset('data', data=eeg1_std5)
-    hf.close()
+                # 保存均值
+                with h5py.File(f'{save_path}/eog1_mean{i + 1}.h5', 'w') as f:
+                    f.create_dataset('mean', data=main_mean)
 
-    # ==============================================================>
-    # For 'eog'
-    # ==============================================================>
+                # 保存标准差
+                with h5py.File(f'{save_path}/eog1_std{i + 1}.h5', 'w') as f:
+                    f.create_dataset('std', data=main_std)
+            else:
+                print("Warning: invalid channel", channels)
+            # 保存标签数据（只保存一次）
+            if not label_saved:
+                with h5py.File(f'{save_path}/labels{i + 1}.h5', 'w') as f:
+                    f.create_dataset('labels', data=main_labels)
+                label_saved = True
+            print(
+                f"Fold {i + 1} complete.Train data shape : {main_ext_raw_data.shape}, Train label shape : {main_labels.shape}")
 
-    eog1, labels_1, len_1, eog_m1, eog_std1 = signal_extract(sub_1, days, channel='eog', filter=True, freq=[0.2, 40])
-    print(f"Train data shape : {eog1.shape}, Train label shape : {labels_1.shape}")
-
-    #### Save data as .h5. ######
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/eog1.h5', 'w')
-    hf.create_dataset('data', data=eog1)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_m1.h5', 'w')
-    hf.create_dataset('data', data=eog_m1)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_std1.h5', 'w')
-    hf.create_dataset('data', data=eog_std1)
-    hf.close()
-
-    eog2, labels_2, len_2, eog_m2, eog_std2 = signal_extract(sub_2, days, channel='eog', filter=True, freq=[0.2, 40])
-    print(f"Train data shape : {eog2.shape}, Train label shape : {labels_2.shape}")
-
-    #### Save data as .h5. ######
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/eog2.h5', 'w')
-    hf.create_dataset('data', data=eog2)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_m2.h5', 'w')
-    hf.create_dataset('data', data=eog_m2)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_std2.h5', 'w')
-    hf.create_dataset('data', data=eog_std2)
-    hf.close()
-
-    eog3, labels_3, len_3, eog_m3, eog_std3 = signal_extract(sub_3, days, channel='eog', filter=True, freq=[0.2, 40])
-    print(f"Train data shape : {eog3.shape}, Train label shape : {labels_3.shape}")
-
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/eog3.h5', 'w')
-    hf.create_dataset('data', data=eog3)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_m3.h5', 'w')
-    hf.create_dataset('data', data=eog_m3)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_std3.h5', 'w')
-    hf.create_dataset('data', data=eog_std3)
-    hf.close()
-
-    eog4, labels_4, len_4, eog_m4, eog_std4 = signal_extract(sub_4, days, channel='eog', filter=True, freq=[0.2, 40])
-    print(f"Train data shape : {eog4.shape}, Train label shape : {labels_4.shape}")
-
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/eog4.h5', 'w')
-    hf.create_dataset('data', data=eog4)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_m4.h5', 'w')
-    hf.create_dataset('data', data=eog_m4)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_std4.h5', 'w')
-    hf.create_dataset('data', data=eog_std4)
-    hf.close()
-
-    eog5, labels_5, len_5, eog_m5, eog_std5 = signal_extract(sub_5, days, channel='eog', filter=True, freq=[0.2, 40])
-    print(f"Train data shape : {eeg1_5.shape}, Train label shape : {labels_5.shape}")
-
-    #### Save data as .h5. ######
-    hf = h5py.File(f'{save_path}/eog5.h5', 'w')
-    hf.create_dataset('data', data=eog5)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_m5.h5', 'w')
-    hf.create_dataset('data', data=eog_m5)
-    hf.close()
-    hf = h5py.File(f'{save_path}/eog_std5.h5', 'w')
-    hf.create_dataset('data', data=eog_std5)
-    hf.close()
-
+    print("Results for all channels saved.")
 
 
 if __name__ == '__main__':
