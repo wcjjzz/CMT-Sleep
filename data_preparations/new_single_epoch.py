@@ -481,7 +481,7 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
 
         # 【改数据获取】
             signal2idx = {"eeg1": 0, "eeg2": 1, "eeg3": 2, "eeg4": 3, "eeg5": 4, "eeg6": 5,
-                          "eog1": 8, "eog2": 9}
+                          "eog1": 7, "eog2": 8}
             all_channels_list = list(all_channels)
             all_channels_list.remove(all_channels[signal2idx[channel]])
             exclude_channels = tuple(all_channels_list)
@@ -496,11 +496,10 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
         #         "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3,
         #          "Sleep stage R": 4, "Sleep stage ?": 5, "Movement time": 6}
             ann2label = {
-                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage 4": 4, "Sleep stage R": 5}
+                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage R": 4}
 
             ann2label_without_unknown_stages = {
-                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage 4": 4,
-                "Sleep stage R": 5}
+                "Sleep stage W": 0, "Sleep stage 1": 1, "Sleep stage 2": 2, "Sleep stage 3": 3, "Sleep stage R": 4}
 
             # annot.crop(annot[1]['onset'] - 30 * 60, annot[-2]['onset'] + 30 * 60)
 
@@ -555,9 +554,7 @@ def signal_extract_hospital(edf_anno_pairs, channel='eeg1', filter=True, freq=[0
                     label_epochs.append(2)
                 if sleep_stage == {"Sleep stage 3": 3}:
                     label_epochs.append(3)
-                if sleep_stage == {"Sleep stage 4": 4}:
-                    label_epochs.append(3)
-                if sleep_stage == {"Sleep stage R": 5}:
+                if sleep_stage == {"Sleep stage R": 4}:
                     label_epochs.append(4)
 
                 mean_epochs.append(signal_mean)
